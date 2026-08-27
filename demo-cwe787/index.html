@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TechStore · Checkout (Demo CWE-787)</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#182236; --panel2:#1f2c44; --line:#2c3a56;
+    --text:#e8eefc; --muted:#93a1c0; --blue:#5b9bd5; --blue2:#4472c4;
+    --red:#e5484d; --green:#37b26b; --amber:#ffc000;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.4}
+  header{padding:18px 32px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header .logo{font-size:22px;font-weight:800;letter-spacing:-.5px}
+  header .logo b{color:var(--blue)}
+  header .cwe{background:var(--red);color:#fff;font-weight:700;font-size:12px;
+    padding:4px 9px;border-radius:6px;letter-spacing:.5px}
+  header .sub{color:var(--muted);font-size:13px;margin-left:auto}
+  .wrap{display:grid;grid-template-columns:minmax(340px,1fr) minmax(430px,1.15fr);
+    gap:24px;padding:26px 32px;max-width:1400px;margin:0 auto}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .card h2{margin:0 0 16px;font-size:13px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+
+  /* producto */
+  .product{display:flex;gap:16px;align-items:center;margin-bottom:8px}
+  .thumb{width:96px;height:96px;border-radius:12px;background:linear-gradient(135deg,#22304d,#2c3a56);
+    display:flex;align-items:center;justify-content:center;font-size:44px;flex:0 0 auto}
+  .product .name{font-size:18px;font-weight:700}
+  .product .meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .product .price{font-size:20px;font-weight:800;margin-top:8px}
+
+  hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+
+  /* modo */
+  .modes{display:flex;gap:0;background:var(--panel2);border-radius:10px;padding:5px;margin:0 0 18px}
+  .modes button{flex:1;border:0;background:transparent;color:var(--muted);font-weight:600;
+    font-size:13.5px;padding:10px;border-radius:7px;cursor:pointer;transition:.15s}
+  .modes button.active[data-m="vuln"]{background:var(--red);color:#fff}
+  .modes button.active[data-m="secure"]{background:var(--green);color:#fff}
+
+  label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 8px}
+  .couponrow{display:flex;gap:10px}
+  input[type=text]{flex:1;font-family:var(--mono);font-size:16px;padding:13px 15px;
+    background:#0b101b;border:1px solid var(--line);border-radius:10px;color:var(--text)}
+  input[type=text]:focus{outline:2px solid var(--blue);border-color:var(--blue)}
+  .applybtn{border:0;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    font-weight:700;font-size:14px;padding:0 18px;border-radius:10px;cursor:pointer}
+  .len{font-size:11.5px;color:var(--muted);margin-top:7px;font-family:var(--mono)}
+  .len b{color:var(--amber)}
+  .quick{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .quick button{flex:1;min-width:110px;font-size:12px;font-weight:600;padding:8px;border-radius:8px;
+    cursor:pointer;background:var(--panel2);border:1px solid var(--line);color:var(--text)}
+  .quick button.attack{border-color:var(--red);color:#ff9a9d}
+  .quick button:hover{filter:brightness(1.25)}
+
+  /* totales */
+  .totals{margin-top:6px;font-size:14.5px}
+  .totals .row{display:flex;justify-content:space-between;padding:7px 0;color:var(--muted)}
+  .totals .row.disc{color:var(--green);font-weight:700}
+  .totals .row.disc.evil{color:#ff9a9d}
+  .totals .row.total{color:var(--text);font-size:22px;font-weight:800;border-top:1px solid var(--line);
+    margin-top:6px;padding-top:14px}
+  .totals .row.total .amt.free{color:var(--green)}
+  .paybtn{width:100%;margin-top:16px;border:0;background:var(--blue2);color:#fff;font-weight:800;
+    font-size:16px;padding:14px;border-radius:10px;cursor:pointer}
+  .paybtn:hover{filter:brightness(1.1)}
+  .msg{margin-top:14px;border-radius:11px;padding:14px 16px;font-size:13.5px;display:none}
+  .msg.show{display:block}
+  .msg.evil{background:rgba(229,72,77,.13);border:1px solid var(--red);color:#ffbfc1}
+  .msg.good{background:rgba(55,178,107,.13);border:1px solid var(--green);color:#9df0c0}
+  .msg b{color:#fff}
+  code{font-family:var(--mono);background:#0b101b;padding:2px 6px;border-radius:5px;color:var(--amber)}
+
+  /* memoria */
+  .memlegend{display:flex;gap:18px;font-size:12px;color:var(--muted);margin:-4px 0 16px;flex-wrap:wrap}
+  .memlegend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:14px;height:14px;border-radius:3px;display:inline-block}
+  .mem{display:grid;grid-template-columns:repeat(10,1fr);gap:7px}
+  .cell{background:#0b101b;border:1px solid var(--line);border-radius:8px;
+    padding:9px 0 7px;text-align:center;font-family:var(--mono);transition:.25s}
+  .cell .hex{font-size:15px;font-weight:700}
+  .cell .idx{font-size:9.5px;color:#5f6f8e;margin-top:3px}
+  .cell .asc{font-size:10px;color:var(--muted);height:12px}
+  .cell.buf{border-color:#33507a}
+  .cell.flag{border-color:#7a3340;background:#170e14}
+  .cell.hit{background:#3a1418;border-color:var(--red);box-shadow:0 0 0 2px rgba(229,72,77,.4)}
+  .cell.set{background:#11321f;border-color:var(--green)}
+  .zones{display:flex;gap:7px;margin-top:12px;font-size:11.5px}
+  .zone{padding:6px 10px;border-radius:7px;font-weight:700}
+  .zone.b{background:rgba(91,155,213,.15);color:var(--blue);width:calc(80% - 4px)}
+  .zone.f{background:rgba(229,72,77,.15);color:#ff9a9d;width:calc(20% - 4px);text-align:center}
+  .flagval{margin-top:14px;font-family:var(--mono);font-size:13.5px;color:var(--muted)}
+  .flagval b{color:var(--text);font-size:15px}
+  .raw{margin-top:14px;background:#0b101b;border:1px solid var(--line);border-radius:8px;
+    padding:11px 13px;font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:pre-wrap;display:none}
+  .raw.show{display:block}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">Tech<b>Store</b></span>
+  <span class="cwe">CWE-787</span>
+  <span class="sub">Demo en vivo · Out-of-bounds Write (Escritura fuera de límites)</span>
+</header>
+
+<div class="wrap">
+  <!-- IZQUIERDA: checkout -->
+  <div class="card">
+    <h2>Tu carrito</h2>
+    <div class="product">
+      <div class="thumb">💻</div>
+      <div>
+        <div class="name">Notebook Gamer RTX</div>
+        <div class="meta">16&nbsp;GB RAM · 1&nbsp;TB SSD · Envío gratis</div>
+        <div class="price">$1.200</div>
+      </div>
+    </div>
+    <hr>
+
+    <div class="modes">
+      <button data-m="vuln" class="active" onclick="setMode('vuln')">🐞 Backend VULNERABLE</button>
+      <button data-m="secure" onclick="setMode('secure')">🛡️ Backend CORREGIDO</button>
+    </div>
+
+    <label>Código de cupón</label>
+    <div class="couponrow">
+      <input id="coupon" type="text" spellcheck="false" autocomplete="off"
+             placeholder="ej: SALE10" oninput="updateLen()">
+      <button class="applybtn" onclick="submit()">Aplicar</button>
+    </div>
+    <div class="len">longitud del cupón: <b id="len">0</b> bytes &nbsp;·&nbsp; buffer reservado: 16 bytes</div>
+
+    <div class="quick">
+      <button onclick="fill('DESCUENTO')">Cupón inválido</button>
+      <button onclick="fill('SALE25')">Cupón válido (25%)</button>
+      <button class="attack" onclick="fill('AAAAAAAAAAAAAAAAAAAA')">💥 Cupón malicioso</button>
+    </div>
+
+    <hr>
+    <div class="totals">
+      <div class="row"><span>Subtotal</span><span id="subtotal">$1.200</span></div>
+      <div class="row disc" id="discrow" style="display:none"><span id="disclabel">Descuento</span><span id="discamt">-$0</span></div>
+      <div class="row total"><span>Total a pagar</span><span class="amt" id="total">$1.200</span></div>
+    </div>
+    <button class="paybtn" onclick="submit()">Pagar pedido</button>
+
+    <div id="msg" class="msg"></div>
+    <div class="raw" id="raw"></div>
+  </div>
+
+  <!-- DERECHA: memoria -->
+  <div class="card">
+    <h2>Memoria del servidor (20 bytes)</h2>
+    <div class="memlegend">
+      <span><i class="sw" style="background:#33507a"></i> <code>coupon[16]</code> (buffer)</span>
+      <span><i class="sw" style="background:#e5484d"></i> <code>discount_percent</code> (descuento)</span>
+    </div>
+    <div class="mem" id="mem"></div>
+    <div class="zones">
+      <div class="zone b">char coupon[16]</div>
+      <div class="zone f">int %</div>
+    </div>
+    <div class="flagval">discount_percent = <b id="flagval">0</b> % &nbsp; → &nbsp; <span id="flagexpl">sin descuento</span></div>
+  </div>
+</div>
+
+<script>
+let MODE = 'vuln';
+const fmt = n => '$' + Number(n).toLocaleString('es-AR');
+function setMode(m){
+  MODE = m;
+  document.querySelectorAll('.modes button').forEach(b=>b.classList.toggle('active', b.dataset.m===m));
+}
+function fill(v){ document.getElementById('coupon').value = v; updateLen(); }
+function updateLen(){ document.getElementById('len').textContent = document.getElementById('coupon').value.length; }
+
+function renderMem(bytes, discount){
+  const mem = document.getElementById('mem');
+  mem.innerHTML = '';
+  for(let i=0;i<20;i++){
+    const b = bytes ? parseInt(bytes[i],16) : 0;
+    const hex = bytes ? bytes[i] : '00';
+    const isFlag = i>=16;
+    const cell = document.createElement('div');
+    cell.className = 'cell ' + (isFlag?'flag':'buf');
+    if(isFlag && b!==0) cell.classList.add(MODE==='vuln'?'hit':'set');
+    const asc = (b>=32 && b<127) ? String.fromCharCode(b) : '·';
+    cell.innerHTML = `<div class="hex">${hex}</div><div class="asc">${asc}</div><div class="idx">${i}</div>`;
+    mem.appendChild(cell);
+  }
+  document.getElementById('flagval').textContent = discount;
+  document.getElementById('flagexpl').textContent =
+    discount==0 ? 'sin descuento' : (discount>100 ? '¡DESCUENTO IMPOSIBLE!' : discount+'% de descuento');
+}
+renderMem(null,0);
+
+async function submit(){
+  const coupon = document.getElementById('coupon').value;
+  let d;
+  try{
+    const r = await fetch('/api/check',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mode:MODE,coupon})});
+    d = await r.json();
+  }catch(e){ alert('¿Está corriendo el servidor?  python3 server.py'); return; }
+
+  renderMem(d.bytes, d.discount ?? 0);
+
+  // totales
+  document.getElementById('subtotal').textContent = fmt(d.base ?? 1200);
+  const discrow = document.getElementById('discrow');
+  const total = document.getElementById('total');
+  const isFree = (d.result === 'FREE');
+  const rejected = (d.result === 'REJECTED');
+  const discountAmt = (d.base ?? 1200) - (d.final ?? d.base ?? 1200);
+
+  if(d.discount && d.discount !== 0 && !rejected){
+    discrow.style.display = 'flex';
+    discrow.classList.toggle('evil', MODE==='vuln' && !d.coupon_valid);
+    document.getElementById('disclabel').textContent = 'Descuento (' + d.discount + '%)';
+    document.getElementById('discamt').textContent = '-' + fmt(discountAmt);
+  } else {
+    discrow.style.display = 'none';
+  }
+  total.textContent = isFree ? 'GRATIS' : fmt(d.final ?? d.base ?? 1200);
+  total.classList.toggle('free', isFree);
+
+  // mensaje
+  const msg = document.getElementById('msg');
+  if(MODE==='vuln' && isFree && !d.coupon_valid){
+    msg.className = 'msg show evil';
+    msg.innerHTML = '💥 <b>¡Explotado!</b> El cupón no es válido, pero sus ' + coupon.length +
+      ' bytes desbordaron <code>coupon[16]</code> y sobre-escribieron <code>discount_percent</code> ' +
+      '(ahora = ' + d.discount + '). El total quedó en <b>$0</b>: te llevás la notebook <b>gratis</b>.';
+  } else if(d.coupon_valid){
+    msg.className = 'msg show good';
+    msg.innerHTML = '✅ Cupón válido aplicado: <b>' + d.discount + '%</b> de descuento legítimo.';
+  } else if(MODE==='secure' && rejected){
+    msg.className = 'msg show good';
+    msg.innerHTML = '🛡️ El backend corregido <b>acota la copia</b>: el cupón malicioso es rechazado y no puede tocar el precio.';
+  } else if(MODE==='secure' && !d.coupon_valid){
+    msg.className = 'msg show good';
+    msg.innerHTML = '🛡️ Cupón inválido y sin desborde posible: se cobra el precio completo, como corresponde.';
+  } else {
+    msg.className = 'msg show evil';
+    msg.innerHTML = 'Cupón inválido: se cobra el precio completo.';
+    msg.className = 'msg show';
+  }
+
+  const raw = document.getElementById('raw');
+  raw.textContent = 'salida del binario:\n' + (d.raw || d.error || '');
+  raw.className = 'raw show';
+}
+document.getElementById('coupon').addEventListener('keydown',e=>{ if(e.key==='Enter') submit(); });
+</script>
+</body>
+</html>
