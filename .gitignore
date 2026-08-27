@@ -1,3 +1,8 @@
+# Binarios compilados (se generan con Docker o build.sh; no se versionan)
 bin/
 *.o
+*.exe
+techstore
+# Artefactos de Office / SO
+~$*
 .DS_Store

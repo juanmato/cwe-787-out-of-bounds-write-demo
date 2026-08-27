@@ -3,20 +3,20 @@
 Material para la presentación de **Desarrollo Seguro de Software** (SANS Top 25 #5 — CWE-787,
 *Out-of-bounds Write* / escritura fuera de límites).
 
-## ⬇️ Descargar
+## ▶️ Correr la demo (Docker)
 
-Botón verde **Code → Download ZIP** (arriba a la derecha). Descomprimí y listo.
+Requiere Docker instalado y corriendo. Compila el servidor en C dentro del contenedor y lo sirve;
+el código fuente queda a la vista, no se distribuye ningún binario.
 
-## ▶️ Correr la demo en Windows 11 (un clic, no instala nada)
+```bash
+cd demo-cwe787
+docker build -t cwe787-demo .
+docker run --rm -p 8000:8000 cwe787-demo
+```
 
-1. Entrá a la carpeta `demo-cwe787/`.
-2. Doble clic en **`INICIAR-DEMO.bat`** → se abre el navegador en http://localhost:8000.
-   - Si aparece *"Windows protegió su PC"* (SmartScreen): **Más información → Ejecutar de todas formas**
-     (el `.exe` no está firmado; el código fuente está acá al lado).
-   - No pide Firewall: el servidor escucha solo en `localhost`.
-3. Para detener: cerrá la ventana negra *"TechStore - Demo CWE-787"*.
+Abrí **http://localhost:8000**. Para detener: `Ctrl+C` en la terminal.
 
-En macOS/Linux: `cd demo-cwe787 && ./build.sh && ./bin/techstore`.
+> ¿Sin Docker? Ver [`demo-cwe787/README.md`](demo-cwe787/README.md) para el build nativo con `gcc`/`clang`.
 
 ## 🛒 Qué muestra la demo
 
@@ -31,9 +31,9 @@ un cupón de más de 16 bytes **se desborda y sobre-escribe el descuento** → e
 
 | Ruta | Qué es |
 |------|--------|
-| `CWE-787-Out-of-bounds-Write.pptx` | La presentación (10 slides). |
+| `CWE-787-Out-of-bounds-Write.pdf` | La presentación (10 slides). |
 | `guion-y-preguntas.md` | Guion cronometrado + preguntas frecuentes con respuesta. |
-| `demo-cwe787/` | La demo (Windows `.exe` autocontenido + fuentes en C + instructivo). |
+| `demo-cwe787/` | La demo (Dockerfile + fuentes en C + instructivo). |
 | `demo-cwe787/README.md` | Instructivo detallado para reproducir la demo. |
 
 > ⚠️ La demo **desactiva a propósito** las protecciones del compilador (stack canary, FORTIFY)

@@ -35,7 +35,7 @@ Demo: tienda **TechStore** (carpeta `demo-cwe787/`).
 
 ### 2) Demo en vivo — ~4 min  (slide 6 → navegador)
 
-> Levantar antes: `cd demo-cwe787 && ./build.sh && python3 server.py` → `http://localhost:8000`.
+> Levantar antes: `cd demo-cwe787 && docker build -t cwe787-demo . && docker run --rm -p 8000:8000 cwe787-demo` → `http://localhost:8000`.
 
 1. **Cupón inválido** (`DESCUENTO`) → se cobra **$1.200**. "Comportamiento normal."
 2. **Cupón válido** (`SALE25`) → **$900**. "25% real, todo bien."
@@ -130,8 +130,8 @@ que queremos mostrar.
 ## Cómo reproducir la demo (instructivo → entregable III)
 ```bash
 cd demo-cwe787
-./build.sh          # compila bin/vuln y bin/secure (clang)
-python3 server.py   # abre http://localhost:8000
+docker build -t cwe787-demo .
+docker run --rm -p 8000:8000 cwe787-demo   # abre http://localhost:8000
 ```
 Cupones válidos: `SALE10` (10%) y `SALE25` (25%). Payload de ataque: 20+ caracteres cualesquiera.
 Detalle completo en `demo-cwe787/README.md`.

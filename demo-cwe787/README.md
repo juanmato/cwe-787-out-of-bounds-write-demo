@@ -11,43 +11,33 @@ sin un cupón válido.
 
 ---
 
-## ▶️ Windows 11 — un solo clic (recomendado, no instala nada)
+## ▶️ Correr con Docker (recomendado)
 
-1. Copiá la carpeta a la máquina (o descomprimí el `.zip`).
-2. Doble clic en **`INICIAR-DEMO.bat`**.
-   - Se abre una ventana negra (el servidor) y el navegador en **http://localhost:8000**.
-   - Si Windows muestra *"Windows protegió su PC"* (SmartScreen), clic en **Más información →
-     Ejecutar de todas formas**. Es porque el `.exe` no está firmado; el código fuente está incluido.
-   - No pide permiso de Firewall: el servidor escucha **solo en `localhost` (127.0.0.1)**.
-3. Para **detener**: cerrá la ventana negra titulada *"TechStore - Demo CWE-787"*.
-
-> Si el `.bat` no abre el navegador, abrilo a mano y entrá a `http://localhost:8000`.
-> También podés hacer doble clic directo en `techstore.exe` y abrir esa URL vos.
-
-`techstore.exe` es **autocontenido**: incluye la página y la lógica. No necesita Python,
-ni compilador, ni conexión a internet.
-
-## ▶️ macOS / Linux
-
-```bash
-cd demo-cwe787
-./build.sh            # compila las versiones nativas
-./bin/techstore       # abre http://localhost:8000
-```
-
-## ▶️ Docker (alternativa multiplataforma)
-
-Requiere Docker instalado y corriendo. Compila el código y lo sirve; el fuente queda a la vista.
+Requiere Docker instalado y corriendo. Compila el servidor en C dentro del contenedor y lo sirve;
+el código fuente queda a la vista y no se distribuye ningún binario precompilado.
 
 ```bash
 cd demo-cwe787
 docker build -t cwe787-demo .
-docker run --rm -p 8000:8000 cwe787-demo    # abrir http://localhost:8000
+docker run --rm -p 8000:8000 cwe787-demo
 ```
 
-> Nota: para la demo en vivo en una máquina Windows "prestada", el `.exe` de un clic suele ser más
-> confiable que Docker (Docker Desktop necesita instalación, WSL2 y permisos de admin). Docker es
-> ideal si la máquina ya lo tiene o para reproducibilidad.
+Abrí **http://localhost:8000**. Para **detener**: `Ctrl+C` en la terminal.
+
+## ▶️ Build nativo (sin Docker, mac/Linux)
+
+Si preferís no usar Docker, podés compilar el servidor autocontenido con `gcc` o `clang`:
+
+```bash
+cd demo-cwe787
+gcc -O0 -fno-stack-protector -D_FORTIFY_SOURCE=0 -Wno-deprecated-declarations \
+    -o techstore techstore.c
+./techstore            # abre http://localhost:8000
+```
+
+> Alternativa: `./build.sh` compila las versiones mínimas `bin/vuln` y `bin/secure`, y
+> `python3 server.py` levanta un servidor que las invoca. Útil para inspeccionar cada versión por
+> separado.
 
 ---
 
@@ -73,25 +63,14 @@ Cupones legítimos de la tienda: **`SALE10`** (10%) y **`SALE25`** (25%).
 
 | Archivo            | Qué es |
 |--------------------|--------|
-| `INICIAR-DEMO.bat` | Lanzador de un clic para Windows. |
-| `techstore.exe`    | **Demo autocontenida para Windows** (servidor + página + lógica). |
-| `techstore.c`      | Fuente del servidor + lógica (portable Windows/mac/Linux). |
-| `vuln.c` / `vuln.exe`     | Versión mínima **vulnerable** (`strcpy` sin límite → CWE-787). |
-| `secure.c` / `secure.exe` | Versión mínima **corregida** (`strncpy` acotado + `\0` + rechazo). |
+| `Dockerfile`       | Compila y corre la demo en un contenedor (método recomendado). |
+| `techstore.c`      | Servidor autocontenido + lógica (portable Windows/mac/Linux). Es lo que compila Docker. |
+| `vuln.c`           | Versión mínima **vulnerable** (`strcpy` sin límite → CWE-787). Referencia didáctica. |
+| `secure.c`         | Versión mínima **corregida** (`strncpy` acotado + `\0` + rechazo). Referencia didáctica. |
 | `index.html`       | La página del checkout + visualización de memoria. |
-| `Dockerfile`       | Para correr la demo en un contenedor (`docker build` / `docker run`). |
-| `server.py`        | Servidor alternativo en Python (mac/Linux, usa `bin/vuln` y `bin/secure`). |
-| `build.sh` / `gen_page.py` | Compilar en mac/Linux y regenerar la página embebida. |
-
-## 🔧 Recompilar el `.exe` de Windows (opcional)
-
-Necesitás un compilador de C para Windows (por ej. **MinGW-w64**):
-
-```bash
-python3 gen_page.py    # regenera page.h desde index.html
-x86_64-w64-mingw32-gcc -O0 -fno-stack-protector -D_FORTIFY_SOURCE=0 \
-    -static -o techstore.exe techstore.c -lws2_32 -lwsock32
-```
+| `page.h`           | `index.html` embebida en un header C (autogenerado por `gen_page.py`). |
+| `server.py`        | Servidor alternativo en Python que usa `bin/vuln` y `bin/secure`. |
+| `build.sh` / `gen_page.py` | Compilar `vuln`/`secure` y regenerar `page.h`. |
 
 ---
 
@@ -103,8 +82,8 @@ x86_64-w64-mingw32-gcc -O0 -fno-stack-protector -D_FORTIFY_SOURCE=0 \
   y hay que corregir el código.
 - El `_pad[64]` de la struct es solo para que **la demo no crashee** al proyectar: absorbe el
   desborde para que no toque el marco de pila real.
-- El servidor escucha **solo en `127.0.0.1`** y el cupón se procesa en el proceso en C; no hay
-  inyección de comandos ni exposición a la red: lo único vulnerable es el desborde en C, que es
-  justo lo que queremos demostrar.
+- Dentro del contenedor el servidor escucha en `0.0.0.0:8000` (necesario para publicar el puerto);
+  el cupón se procesa en el proceso en C y **no hay inyección de comandos** ni exposición extra:
+  lo único vulnerable es el desborde en C, que es justo lo que queremos demostrar.
 - ¿Por qué una página y no C directo? Out-of-bounds Write es un bug de **memoria nativa** (no existe
   en JavaScript). La página es solo la interfaz; el desborde real ocurre en el binario en C.
