@@ -191,7 +191,11 @@ int main(void) {
     struct sockaddr_in addr; memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(PORT);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);   /* solo localhost */
+#ifdef BIND_ANY
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);        /* 0.0.0.0 (necesario dentro de Docker) */
+#else
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);   /* solo localhost (evita el Firewall en Windows) */
+#endif
 
     if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
         fprintf(stderr, "No se pudo abrir el puerto %d (¿ya hay algo corriendo?).\n", PORT);

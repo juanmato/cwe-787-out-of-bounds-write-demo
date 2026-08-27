@@ -35,6 +35,20 @@ cd demo-cwe787
 ./bin/techstore       # abre http://localhost:8000
 ```
 
+## ▶️ Docker (alternativa multiplataforma)
+
+Requiere Docker instalado y corriendo. Compila el código y lo sirve; el fuente queda a la vista.
+
+```bash
+cd demo-cwe787
+docker build -t cwe787-demo .
+docker run --rm -p 8000:8000 cwe787-demo    # abrir http://localhost:8000
+```
+
+> Nota: para la demo en vivo en una máquina Windows "prestada", el `.exe` de un clic suele ser más
+> confiable que Docker (Docker Desktop necesita instalación, WSL2 y permisos de admin). Docker es
+> ideal si la máquina ya lo tiene o para reproducibilidad.
+
 ---
 
 ## 🎬 Guion de la demo en vivo
@@ -65,6 +79,7 @@ Cupones legítimos de la tienda: **`SALE10`** (10%) y **`SALE25`** (25%).
 | `vuln.c` / `vuln.exe`     | Versión mínima **vulnerable** (`strcpy` sin límite → CWE-787). |
 | `secure.c` / `secure.exe` | Versión mínima **corregida** (`strncpy` acotado + `\0` + rechazo). |
 | `index.html`       | La página del checkout + visualización de memoria. |
+| `Dockerfile`       | Para correr la demo en un contenedor (`docker build` / `docker run`). |
 | `server.py`        | Servidor alternativo en Python (mac/Linux, usa `bin/vuln` y `bin/secure`). |
 | `build.sh` / `gen_page.py` | Compilar en mac/Linux y regenerar la página embebida. |
 
